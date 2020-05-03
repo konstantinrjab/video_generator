@@ -1,36 +1,31 @@
 import moviepy.editor as mpy
-import gizeh
 
 WHITE = (255, 255, 255)
 VIDEO_SIZE = (640, 480)
 
-background_path = './assets/background2.png'
+background_path = './assets/background.png'
 background = mpy.ImageClip(background_path). \
     set_position(('center', 0)). \
     resize(width=VIDEO_SIZE[0])
 
+tree_path = './assets/tree1.png'
+tree = mpy.ImageClip(tree_path, transparent=True). \
+    set_position(lambda t: (t * 100, 250)). \
+    resize(width=30)
 
-def make_frame(t):
-    surface = gizeh.Surface(width=VIDEO_SIZE[0], height=VIDEO_SIZE[1])
-    line = gizeh.polyline(points=[(0, 100), (200, 300)], stroke_width=10, stroke=(1, 0, 0))
-    line.draw(surface)
-    return surface.get_npimage(transparent=True)
-
-
-graphics_clip_mask = mpy.VideoClip(lambda t: make_frame(t)[:, :, 3] / 255.0, duration=5, ismask=True)
-graphics_clip = mpy.VideoClip(lambda t: make_frame(t)[:, :, :3],
-                              duration=5).set_mask(graphics_clip_mask)
+ground_path = './assets/ground.jpg'
+ground = mpy.ImageClip(ground_path, transparent=True). \
+    set_position((0, -30)). \
+    resize(width=VIDEO_SIZE[0])
 
 video = mpy.CompositeVideoClip(
     [
-        background,
-        graphics_clip.set_position(
-            ('center', 100)
-        )
+        ground,
+        tree,
+        background
     ],
     size=VIDEO_SIZE). \
     on_color(
     color=WHITE,
     col_opacity=1).set_duration(5)
-
-video.write_videofile('video.mp4', fps=10)
+video.write_videofile('video.mp4', fps=25)

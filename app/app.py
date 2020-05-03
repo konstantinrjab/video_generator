@@ -3,10 +3,11 @@ from random import randrange
 import random
 
 VIDEO_SIZE = (640, 480)
-DURATION = 15
-TREE_RANGE_HEIGHT = (250, 320)
-TREE_DENSITY = 4
-TRAIN_SPEED = 25
+DURATION = 8
+TREE_Y_RANGE = (250, 320)
+TREE_DENSITY = 100
+TREE_DISTANCE_BETWEEN = 50
+TRAIN_SPEED = 75
 
 WHITE = (255, 255, 255)
 
@@ -23,26 +24,27 @@ def get_ground():
         .resize(width=VIDEO_SIZE[0])
 
 
-def get_trees(count):
+def get_trees():
     tree_paths = [
         './assets/tree1.png',
         './assets/tree2.png',
         './assets/tree3.png',
     ]
     trees = []
-
+    trees_count = DURATION + round(VIDEO_SIZE[0] / TRAIN_SPEED)
     position_function_list = [
         eval(
-            'lambda t: (200 * t - x, y)',
+            'lambda t: (t * speed + x, y)',
             {
-                'y': randrange(TREE_RANGE_HEIGHT[0], TREE_RANGE_HEIGHT[1]),
-                'x': (tree_number * TRAIN_SPEED) + randrange(-VIDEO_SIZE[0], VIDEO_SIZE[0])
+                'y': randrange(TREE_Y_RANGE[0], TREE_Y_RANGE[1]),
+                'speed': TRAIN_SPEED,
+                'x': (tree_number * TREE_DISTANCE_BETWEEN) - VIDEO_SIZE[0]
             }
         )
-        for tree_number in range(count)
+        for tree_number in range(trees_count)
     ]
 
-    for i in range(count):
+    for i in range(trees_count):
         tree = mpy.ImageClip(random.choice(tree_paths), transparent=True). \
             set_position(position_function_list[i]). \
             resize(width=randrange(30, 50))
@@ -51,7 +53,7 @@ def get_trees(count):
 
 
 video = mpy.CompositeVideoClip(
-    [get_ground()] + get_trees(DURATION * TREE_DENSITY) + [get_background()],
+    [get_ground()] + get_trees() + [get_background()],
     size=VIDEO_SIZE). \
     on_color(
     color=WHITE,

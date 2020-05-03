@@ -2,10 +2,12 @@ import moviepy.editor as mpy
 from random import randrange
 import random
 
-WHITE = (255, 255, 255)
 VIDEO_SIZE = (640, 480)
 DURATION = 5
-TREE_RANGE_HEIGHT = (200, 300)
+TREE_RANGE_HEIGHT = (220, 320)
+TREE_DENSITY = 4
+
+WHITE = (255, 255, 255)
 
 background_path = './assets/background.png'
 background = mpy.ImageClip(background_path). \
@@ -23,10 +25,13 @@ def get_trees(count):
 
     position_function_list = [
         eval(
-            'lambda t: (100 * t, m)',
-            {'m': randrange(TREE_RANGE_HEIGHT[0], TREE_RANGE_HEIGHT[1])}
+            'lambda t: (200 * t - x, y)',
+            {
+                'y': randrange(TREE_RANGE_HEIGHT[0], TREE_RANGE_HEIGHT[1]),
+                'x': (tree_number * 25) + randrange(-VIDEO_SIZE[0], VIDEO_SIZE[0])
+            }
         )
-        for m in range(count)
+        for tree_number in range(count)
     ]
 
     for i in range(count):
@@ -43,7 +48,7 @@ ground = mpy.ImageClip(ground_path, transparent=True). \
     resize(width=VIDEO_SIZE[0])
 
 video = mpy.CompositeVideoClip(
-    [ground] + get_trees(5) + [background],
+    [ground] + get_trees(DURATION * TREE_DENSITY) + [background],
     size=VIDEO_SIZE). \
     on_color(
     color=WHITE,

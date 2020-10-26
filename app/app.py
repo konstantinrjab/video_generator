@@ -1,13 +1,43 @@
 import moviepy.editor as mpy
+from moviepy.video.compositing.CompositeVideoClip import CompositeVideoClip
 from random import randrange
 import random
+import datetime
+import math
 
-VIDEO_SIZE = (640, 480)
-DURATION = 8
+
+class InfVideoClip(CompositeVideoClip):
+    tree_paths = [
+        './assets/tree1.png',
+        './assets/tree2.png',
+        './assets/tree3.png',
+    ]
+    processed_second = 0
+    clips_init_count = None
+
+    def get_frame(self, t):
+        if self.clips_init_count is None:
+            self.clips_init_count = len(self.clips)
+        current_second = math.floor(t)
+
+        if self.processed_second != current_second:
+            self.processed_second = current_second
+            y = randrange(100, 200)
+            tree = mpy.ImageClip(random.choice(self.tree_paths), transparent=True). \
+                set_position(lambda t: (t * TRAIN_SPEED - current_second * TRAIN_SPEED, y)). \
+                resize(width=randrange(30, 50))
+            self.clips.append(tree)
+            if len(self.clips) > 10:
+                self.clips.pop(self.clips_init_count)
+                # del self.clips[-1]
+        return super().get_frame(t)
+
+
+VIDEO_SIZE = (480, 320)
 TREE_Y_RANGE = (250, 320)
 TREE_DENSITY = 100
 TREE_DISTANCE_BETWEEN = 50
-TRAIN_SPEED = 75
+TRAIN_SPEED = 200
 
 WHITE = (255, 255, 255)
 
@@ -23,39 +53,22 @@ def get_ground():
         .set_position((0, -30)) \
         .resize(width=VIDEO_SIZE[0])
 
+video = InfVideoClip(
+    [get_ground()] + [get_background()],
+    # [get_ground()],
+    size=VIDEO_SIZE
+    ). \
+    on_color(color=WHITE, col_opacity=1)
 
-def get_trees():
-    tree_paths = [
-        './assets/tree1.png',
-        './assets/tree2.png',
-        './assets/tree3.png',
-    ]
-    trees = []
-    trees_count = DURATION + round(VIDEO_SIZE[0] / TRAIN_SPEED)
-    position_function_list = [
-        eval(
-            'lambda t: (t * speed + x, y)',
-            {
-                'y': randrange(TREE_Y_RANGE[0], TREE_Y_RANGE[1]),
-                'speed': TRAIN_SPEED,
-                'x': (tree_number * TREE_DISTANCE_BETWEEN) - VIDEO_SIZE[0]
-            }
-        )
-        for tree_number in range(trees_count)
-    ]
+time = 0
+duration = 20
+folder = 'video/'
+counter = 0
+while counter < 1:
+    subclip = video.subclip(time, time + duration)
 
-    for i in range(trees_count):
-        tree = mpy.ImageClip(random.choice(tree_paths), transparent=True). \
-            set_position(position_function_list[i]). \
-            resize(width=randrange(30, 50))
-        trees.append(tree)
-    return trees
-
-
-video = mpy.CompositeVideoClip(
-    [get_ground()] + get_trees() + [get_background()],
-    size=VIDEO_SIZE). \
-    on_color(
-    color=WHITE,
-    col_opacity=1).set_duration(DURATION)
-video.write_videofile('video.mp4', fps=25)
+    now = datetime.datetime.now()
+    filename = str(now.hour) + str(now.minute) + str(now.second) + '.mp4'
+    subclip.write_videofile(folder + filename, fps=25)
+    time += duration
+    counter += 1
